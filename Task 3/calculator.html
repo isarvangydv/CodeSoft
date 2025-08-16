@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calc-container {
+            background: #333;
+            border-radius: 12px;
+            padding: 25px;
+            width: 280px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .screen {
+            background: #000;
+            color: #fff;
+            font-size: 24px;
+            padding: 15px;
+            text-align: right;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-family: monospace;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            background: #666;
+            border: none;
+            color: white;
+            font-size: 18px;
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #777;
+        }
+
+        .btn:active {
+            background: #555;
+        }
+
+        .btn.operator {
+            background: #ff9500;
+        }
+
+        .btn.operator:hover {
+            background: #ffb143;
+        }
+
+        .btn.clear {
+            background: #a6a6a6;
+            color: #000;
+        }
+
+        .btn.clear:hover {
+            background: #bfbfbf;
+        }
+
+        .btn.zero {
+            grid-column: span 2;
+        }
+
+        .btn.equals {
+            background: #ff9500;
+            grid-row: span 2;
+        }
+
+        .btn.equals:hover {
+            background: #ffb143;
+        }
+
+        .error {
+            color: #ff4444 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="calc-container">
+        <div class="screen" id="screen">0</div>
+        <div class="btn-grid">
+            <button class="btn clear" onclick="allClear()">AC</button>
+            <button class="btn clear" onclick="clearEntry()">C</button>
+            <button class="btn operator" onclick="inputOperator('/')">/</button>
+            <button class="btn operator" onclick="inputOperator('*')">×</button>
+            
+            <button class="btn" onclick="inputNumber('7')">7</button>
+            <button class="btn" onclick="inputNumber('8')">8</button>
+            <button class="btn" onclick="inputNumber('9')">9</button>
+            <button class="btn operator" onclick="inputOperator('-')">-</button>
+            
+            <button class="btn" onclick="inputNumber('4')">4</button>
+            <button class="btn" onclick="inputNumber('5')">5</button>
+            <button class="btn" onclick="inputNumber('6')">6</button>
+            <button class="btn operator" onclick="inputOperator('+')">+</button>
+            
+            <button class="btn" onclick="inputNumber('1')">1</button>
+            <button class="btn" onclick="inputNumber('2')">2</button>
+            <button class="btn" onclick="inputNumber('3')">3</button>
+            <button class="btn equals" onclick="calculate()" rowspan="2">=</button>
+            
+            <button class="btn zero" onclick="inputNumber('0')">0</button>
+            <button class="btn" onclick="inputDecimal()">.</button>
+        </div>
+    </div>
+
+    <script>
+        let screen = document.getElementById('screen');
+        let currentValue = '0';
+        let prevValue = null;
+        let operation = null;
+        let waitingForInput = false;
+
+        function updateScreen() {
+            screen.textContent = currentValue;
+        }
+
+        function inputNumber(num) {
+            screen.classList.remove('error');
+            
+            if (waitingForInput) {
+                currentValue = num;
+                waitingForInput = false;
+            } else {
+                currentValue = currentValue === '0' ? num : currentValue + num;
+            }
+            updateScreen();
+        }
+
+        function inputDecimal() {
+            if (currentValue.indexOf('.') === -1) {
+                if (waitingForInput) {
+                    currentValue = '0.';
+                    waitingForInput = false;
+                } else {
+                    currentValue += '.';
+                }
+                updateScreen();
+            }
+        }
+
+        function inputOperator(op) {
+            if (operation && !waitingForInput) {
+                calculate();
+            }
+            
+            prevValue = currentValue;
+            operation = op;
+            waitingForInput = true;
+        }
+
+        function calculate() {
+            if (operation && prevValue !== null) {
+                let result;
+                let prev = parseFloat(prevValue);
+                let current = parseFloat(currentValue);
+                
+                if (operation === '+') {
+                    result = prev + current;
+                } else if (operation === '-') {
+                    result = prev - current;
+                } else if (operation === '*') {
+                    result = prev * current;
+                } else if (operation === '/') {
+                    if (current === 0) {
+                        showError('Error');
+                        return;
+                    }
+                    result = prev / current;
+                }
+                
+                currentValue = result.toString();
+                operation = null;
+                prevValue = null;
+                waitingForInput = true;
+                updateScreen();
+            }
+        }
+
+        function allClear() {
+            currentValue = '0';
+            prevValue = null;
+            operation = null;
+            waitingForInput = false;
+            screen.classList.remove('error');
+            updateScreen();
+        }
+
+        function clearEntry() {
+            currentValue = '0';
+            screen.classList.remove('error');
+            updateScreen();
+        }
+
+        function showError(msg) {
+            currentValue = msg;
+            screen.classList.add('error');
+            updateScreen();
+            setTimeout(() => {
+                allClear();
+            }, 1500);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key >= '0' && e.key <= '9') {
+                inputNumber(e.key);
+            } else if (e.key === '.') {
+                inputDecimal();
+            } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                inputOperator(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                calculate();
+            } else if (e.key === 'Escape') {
+                allClear();
+            } else if (e.key === 'Backspace') {
+                if (currentValue.length > 1) {
+                    currentValue = currentValue.slice(0, -1);
+                } else {
+                    currentValue = '0';
+                }
+                updateScreen();
+            }
+        });
+
+        updateScreen();
+    </script>
+</body>
+</html>
